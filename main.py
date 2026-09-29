@@ -1,20 +1,23 @@
 from contextlib import asynccontextmanager
-
-import psycopg
 from fastapi import FastAPI
 from pydantic import BaseModel
+# Импортируем синглтон настроек из созданного ранее конфига
+from config import settings
 
-# ⚠️ Пока всё зашито прямо в код — это и предстоит исправить.
-DATABASE_URL = "postgresql://guestbook:supersecret123@localhost:5432/guestbook"
 GREETING = "Добро пожаловать в гостевую книгу!"
 
 
 def connect():
-    return psycopg.connect(DATABASE_URL)
+    # Используем вычисляемую DSN-строку из pydantic-settings
+    return psycopg.connect(settings.database_url)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Модуль psycopg импортируем локально, чтобы избежать ошибок окружения при сборке
+    global psycopg
+    import psycopg
+
     with connect() as conn:
         conn.execute(
             "CREATE TABLE IF NOT EXISTS messages ("
